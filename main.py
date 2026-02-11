@@ -27,27 +27,42 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 http_session: aiohttp.ClientSession | None = None
 
 # =========================
-# DRIVE API (ASYNC)
+# GOOGLE DRIVE (FIXED)
 # =========================
 async def get_audio_files():
+    print("🔍 Fetching audio files from Drive...")
+
     url = "https://www.googleapis.com/drive/v3/files"
     params = {
-        "q": f"'{FOLDER_ID}' in parents and mimeType contains 'audio/'",
-        "fields": "files(id,name)",
-        "key": GOOGLE_API_KEY
+        # FIX QUERY
+        "q": (
+            f"'{FOLDER_ID}' in parents and "
+            "(mimeType='audio/mpeg' or mimeType='audio/mp3' or mimeType contains 'audio/')"
+        ),
+        "fields": "files(id,name,mimeType)",
+        "pageSize": 100,
+        "key": GOOGLE_API_KEY,
     }
 
     async with http_session.get(url, params=params) as resp:
         if resp.status != 200:
             print("❌ Drive API error:", resp.status)
+            text = await resp.text()
+            print(text)
             return []
 
         data = await resp.json()
-        return data.get("files", [])
+        files = data.get("files", [])
+
+        print(f"🎵 Drive returned {len(files)} files")
+        return files
 
 def file_url(file_id):
     return f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media&key={GOOGLE_API_KEY}"
 
+# =========================
+# DOWNLOAD
+# =========================
 async def download_file(url, filename):
     path = f"/tmp/{filename}"
 
@@ -63,11 +78,11 @@ async def download_file(url, filename):
     return path
 
 # =========================
-# PLAYER LOOP (STABIL)
+# PLAYER LOOP
 # =========================
 async def play_loop(vc: discord.VoiceClient):
     print("▶ play_loop started")
-    await asyncio.sleep(3)  # beri waktu voice stabil
+    await asyncio.sleep(3)
 
     while True:
         if not vc.is_connected():
@@ -103,7 +118,7 @@ async def play_loop(vc: discord.VoiceClient):
                 pass
 
 # =========================
-# BACKGROUND CONNECT
+# CONNECT VOICE
 # =========================
 async def connect_and_play():
     await bot.wait_until_ready()
@@ -128,17 +143,12 @@ async def on_ready():
     global http_session
     print(f"✅ Logged in as {bot.user}")
 
-    timeout = aiohttp.ClientTimeout(total=120)
+    timeout = aiohttp.ClientTimeout(total=180)
     http_session = aiohttp.ClientSession(timeout=timeout)
 
     bot.loop.create_task(connect_and_play())
 
 # =========================
-# SHUTDOWN CLEAN
+# RUN
 # =========================
-@bot.event
-async def on_close():
-    if http_session:
-        await http_session.close()
-
 bot.run(DISCORD_TOKEN)
