@@ -35,15 +35,13 @@ def get_stream_url(file_id):
     return f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media&key={GOOGLE_API_KEY}"
 
 # =========================
-# LOOP PLAYER (NO SYSTEM FFMPEG)
+# LOOP PLAYER
 # =========================
 async def play_loop(vc):
     await bot.wait_until_ready()
 
     while True:
-        files = get_audio_files()
-
-        for file in files:
+        for file in get_audio_files():
             print(f"Playing: {file['name']}")
             url = get_stream_url(file["id"])
 
@@ -72,7 +70,4 @@ async def on_ready():
     vc = await channel.connect()
     bot.loop.create_task(play_loop(vc))
 
-# =========================
-# RUN
-# =========================
 bot.run(DISCORD_TOKEN)
