@@ -61,13 +61,23 @@ async def play_loop(vc):
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
+    await asyncio.sleep(5)  # delay supaya gateway stabil
+
     channel = bot.get_channel(VOICE_CHANNEL_ID)
     if not channel:
-        print("Voice channel tidak ditemukan")
+        print("Voice channel tidak ditemukan.")
         return
 
-    vc = await channel.connect()
-    bot.loop.create_task(play_loop(vc))
+    try:
+        vc = await channel.connect(
+            reconnect=True,
+            self_deaf=True
+        )
+        bot.loop.create_task(play_loop(vc))
+    except Exception as e:
+        print("Gagal connect voice:", e)
+
 
 bot.run(DISCORD_TOKEN)
+
 
