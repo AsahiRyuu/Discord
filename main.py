@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 import asyncio
 from googleapiclient.discovery import build
+import functools
 
 # =========================
 # ENV VARIABLES
@@ -22,9 +23,9 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # =========================
-# GOOGLE DRIVE
+# GOOGLE DRIVE (SYNC)
 # =========================
-def get_audio_files():
+def fetch_audio_files_sync():
     service = build("drive", "v3", developerKey=GOOGLE_API_KEY)
 
     query = f"'{FOLDER_ID}' in parents and mimeType contains 'audio/'"
@@ -36,22 +37,28 @@ def get_audio_files():
 
     return results.get("files", [])
 
-
 def get_stream_url(file_id):
     return f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media&key={GOOGLE_API_KEY}"
 
 # =========================
-# LOOP PLAYER
+# ASYNC WRAPPER (ANTI BLOCK)
+# =========================
+async def get_audio_files():
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, fetch_audio_files_sync)
+
+# =========================
+# PLAYER LOOP
 # =========================
 async def play_loop(vc):
     await bot.wait_until_ready()
     print("Play loop started")
 
     while True:
-        files = get_audio_files()
+        files = await get_audio_files()
+        print("Jumlah lagu:", len(files))
 
         if not files:
-            print("Folder kosong...")
             await asyncio.sleep(10)
             continue
 
