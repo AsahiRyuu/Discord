@@ -128,19 +128,24 @@ async def play_loop(vc: discord.VoiceClient):
 # CONNECT VOICE
 # =========================
 async def connect_and_play():
-    await bot.wait_until_ready()
-    await asyncio.sleep(5)
+    try:
+        await bot.wait_until_ready()
+        await asyncio.sleep(5)
 
-    channel = bot.get_channel(VOICE_CHANNEL_ID)
-    if not channel:
-        print("❌ Voice channel tidak ditemukan")
-        return
+        channel = bot.get_channel(VOICE_CHANNEL_ID)
+        if not channel:
+            print("❌ Voice channel tidak ditemukan")
+            return
 
-    print("🔊 Connecting to voice...")
-    vc = await channel.connect(reconnect=True, self_deaf=True)
+        print("🔊 Connecting to voice...")
+        vc = await channel.connect(reconnect=True, self_deaf=True)
 
-    print("✅ Voice connected")
-    asyncio.create_task(play_loop(vc))
+        print("✅ Voice connected")
+        await play_loop(vc)
+
+    except Exception as e:
+        print("❌ CONNECT ERROR:", e)
+
 
 # =========================
 # READY
@@ -150,13 +155,14 @@ async def on_ready():
     global http_session
     print(f"✅ Logged in as {bot.user}")
 
-    timeout = aiohttp.ClientTimeout(total=180)
+    timeout = aiohttp.ClientTimeout(total=120)
     http_session = aiohttp.ClientSession(timeout=timeout)
 
-    bot.loop.create_task(connect_and_play())
+    asyncio.create_task(connect_and_play())
 
 # =========================
 # RUN
 # =========================
 bot.run(DISCORD_TOKEN)
+
 
