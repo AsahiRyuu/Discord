@@ -133,17 +133,13 @@ async def connect_and_play():
 # =========================
 @bot.event
 async def on_ready():
-    global http_session
     print(f"✅ Logged in as {bot.user}")
 
-    timeout = aiohttp.ClientTimeout(total=60)
-    http_session = aiohttp.ClientSession(timeout=timeout)
-
-    asyncio.create_task(connect_and_play())
 
 
 # =========================
 # RUN
 # =========================
 bot.run(DISCORD_TOKEN)
+
 
