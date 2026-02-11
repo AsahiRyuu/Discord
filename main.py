@@ -102,7 +102,7 @@ async def play_loop(vc: discord.VoiceClient):
 # =========================
 async def connect_and_play():
     await bot.wait_until_ready()
-    await asyncio.sleep(5)
+    await asyncio.sleep(3)
 
     channel = bot.get_channel(VOICE_CHANNEL_ID)
     if not channel:
@@ -110,10 +110,22 @@ async def connect_and_play():
         return
 
     print("🔊 Connecting to voice...")
-    vc = await channel.connect(reconnect=True, self_deaf=True)
+
+    vc = None
+    try:
+        vc = await channel.connect(reconnect=True, self_deaf=True)
+    except discord.ClientException:
+        vc = discord.utils.get(bot.voice_clients, guild=channel.guild)
+
+    if not vc:
+        print("❌ Gagal connect voice")
+        return
+
     print("✅ Voice connected")
 
-    await play_loop(vc)
+    # PENTING: jangan await
+    asyncio.create_task(play_loop(vc))
+
 
 
 # =========================
@@ -134,3 +146,4 @@ async def on_ready():
 # RUN
 # =========================
 bot.run(DISCORD_TOKEN)
+
