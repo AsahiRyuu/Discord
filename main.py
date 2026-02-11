@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import os
 import asyncio
-import aiohttp
 from googleapiclient.discovery import build
 
 # =========================
@@ -18,20 +17,25 @@ VOICE_CHANNEL_ID = int(os.getenv("VOICE_CHANNEL_ID"))
 # =========================
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+intents.members = True
 
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 # =========================
 # GOOGLE DRIVE
 # =========================
 def get_audio_files():
     service = build("drive", "v3", developerKey=GOOGLE_API_KEY)
+
     query = f"'{FOLDER_ID}' in parents and mimeType contains 'audio/'"
+
     results = service.files().list(
         q=query,
         fields="files(id, name)"
     ).execute()
+
     return results.get("files", [])
+
 
 def get_stream_url(file_id):
     return f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media&key={GOOGLE_API_KEY}"
@@ -41,15 +45,28 @@ def get_stream_url(file_id):
 # =========================
 async def play_loop(vc):
     await bot.wait_until_ready()
+    print("Play loop started")
 
     while True:
-        for file in get_audio_files():
+        files = get_audio_files()
+
+        if not files:
+            print("Folder kosong...")
+            await asyncio.sleep(10)
+            continue
+
+        for file in files:
             print(f"Playing: {file['name']}")
+
             url = get_stream_url(file["id"])
 
-            source = await discord.FFmpegOpusAudio.from_probe(filepath)
-            vc.play(source)
+            source = await discord.FFmpegOpusAudio.from_probe(
+                url,
+                method="fallback",
+                before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+            )
 
+            vc.play(source)
 
             while vc.is_playing():
                 await asyncio.sleep(1)
@@ -77,14 +94,10 @@ async def on_ready():
         self_deaf=True
     )
 
-    print("Voice connected, starting player...")
-    bot.loop.create_task(play_loop(vc))
+    print("Voice connected, starting play loop")
+    asyncio.create_task(play_loop(vc))
 
-
-
-
+# =========================
+# RUN
+# =========================
 bot.run(DISCORD_TOKEN)
-
-
-
-
