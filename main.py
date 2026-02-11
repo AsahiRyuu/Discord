@@ -64,28 +64,27 @@ async def on_ready():
     await asyncio.sleep(5)
 
     channel = bot.get_channel(VOICE_CHANNEL_ID)
-
     if not channel:
-        print("Channel tidak ditemukan")
+        print("Voice channel tidak ditemukan")
         return
 
     if channel.guild.voice_client:
-        print("Sudah connect")
+        print("Sudah connect ke voice")
         return
 
-    try:
-        vc = await channel.connect(
-            reconnect=True,
-            self_deaf=True
-        )
-        print("Voice connected!")
-        bot.loop.create_task(play_loop(vc))
-    except Exception as e:
-        print("Voice error:", e)
+    vc = await channel.connect(
+        reconnect=True,
+        self_deaf=True
+    )
+
+    print("Voice connected, starting player...")
+    bot.loop.create_task(play_loop(vc))
+
 
 
 
 bot.run(DISCORD_TOKEN)
+
 
 
 
