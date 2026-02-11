@@ -3,7 +3,17 @@ from discord.ext import commands
 import os
 import asyncio
 import aiohttp
+import shutil
 from googleapiclient.discovery import build
+
+# =========================
+# DETECT FFMPEG
+# =========================
+FFMPEG_PATH = shutil.which("ffmpeg")
+print("FFMPEG PATH:", FFMPEG_PATH)
+
+if not FFMPEG_PATH:
+    raise RuntimeError("FFmpeg tidak ditemukan di environment")
 
 # =========================
 # ENV VARIABLES (Railway)
@@ -28,7 +38,8 @@ def get_audio_files():
     query = f"'{FOLDER_ID}' in parents and mimeType contains 'audio/'"
 
     results = service.files().list(
-        q=query, fields="files(id, name)"
+        q=query,
+        fields="files(id, name)"
     ).execute()
 
     return results.get("files", [])
@@ -73,8 +84,10 @@ async def play_loop(vc):
                 continue
 
             source = discord.FFmpegPCMAudio(
-            filepath,
-            executable="/nix/store/bin/ffmpeg")
+                filepath,
+                executable=FFMPEG_PATH
+            )
+
             vc.play(source)
 
             while vc.is_playing():
@@ -104,4 +117,3 @@ async def on_ready():
 # RUN
 # =========================
 bot.run(DISCORD_TOKEN)
-
