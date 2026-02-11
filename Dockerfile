@@ -1,8 +1,10 @@
 FROM python:3.12-slim
 
-RUN apt-get update \
-    && apt-get install -y ffmpeg \
-    && apt-get clean \
+# Install ffmpeg + libs voice
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libopus0 \
+    libsodium-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
