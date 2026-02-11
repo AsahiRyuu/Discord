@@ -17,7 +17,9 @@ VOICE_CHANNEL_ID = int(os.getenv("VOICE_CHANNEL_ID"))
 # DISCORD SETUP
 # =========================
 intents = discord.Intents.default()
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+
 
 # =========================
 # GOOGLE DRIVE
@@ -45,12 +47,9 @@ async def play_loop(vc):
             print(f"Playing: {file['name']}")
             url = get_stream_url(file["id"])
 
-            source = await discord.FFmpegOpusAudio.from_probe(
-                url,
-                method="fallback"
-            )
-
+            source = await discord.FFmpegOpusAudio.from_probe(filepath)
             vc.play(source)
+
 
             while vc.is_playing():
                 await asyncio.sleep(1)
@@ -71,3 +70,4 @@ async def on_ready():
     bot.loop.create_task(play_loop(vc))
 
 bot.run(DISCORD_TOKEN)
+
