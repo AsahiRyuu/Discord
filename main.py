@@ -12,9 +12,6 @@ from googleapiclient.discovery import build
 FFMPEG_PATH = shutil.which("ffmpeg")
 print("FFMPEG PATH:", FFMPEG_PATH)
 
-if not FFMPEG_PATH:
-    raise RuntimeError("FFmpeg tidak ditemukan di environment")
-
 # =========================
 # ENV VARIABLES (Railway)
 # =========================
@@ -85,7 +82,7 @@ async def play_loop(vc):
 
             source = discord.FFmpegPCMAudio(
                 filepath,
-                executable=FFMPEG_PATH
+                executable="ffmpeg"
             )
 
             vc.play(source)
@@ -117,3 +114,4 @@ async def on_ready():
 # RUN
 # =========================
 bot.run(DISCORD_TOKEN)
+
