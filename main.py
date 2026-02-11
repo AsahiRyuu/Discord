@@ -72,7 +72,9 @@ async def play_loop(vc):
             if not filepath:
                 continue
 
-            source = discord.FFmpegPCMAudio(filepath)
+            source = discord.FFmpegPCMAudio(
+            filepath,
+            executable="/nix/store/bin/ffmpeg")
             vc.play(source)
 
             while vc.is_playing():
@@ -102,3 +104,4 @@ async def on_ready():
 # RUN
 # =========================
 bot.run(DISCORD_TOKEN)
+
