@@ -1,17 +1,11 @@
-FROM python:3.11-bullseye
+FROM python:3.12-slim
 
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    libsodium-dev \
-    build-essential \
-    libffi-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Install ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg
 
 WORKDIR /app
 
 COPY requirements.txt .
-
-RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
