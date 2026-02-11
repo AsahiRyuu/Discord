@@ -86,7 +86,7 @@ async def play_loop(vc: discord.VoiceClient):
 
     while True:
         if not vc.is_connected():
-            print("⚠️ Voice disconnect, stop loop")
+            print("⚠️ Voice disconnect")
             return
 
         files = await get_audio_files()
@@ -106,16 +106,23 @@ async def play_loop(vc: discord.VoiceClient):
             if not path:
                 continue
 
-            source = discord.FFmpegPCMAudio(path)
-            vc.play(source)
+            done = asyncio.Event()
 
-            while vc.is_playing():
-                await asyncio.sleep(1)
+            def after_play(error):
+                if error:
+                    print("❌ Playback error:", error)
+                done.set()
+
+            source = discord.FFmpegPCMAudio(path)
+            vc.play(source, after=after_play)
+
+            await done.wait()
 
             try:
                 os.remove(path)
             except:
                 pass
+
 
 # =========================
 # CONNECT VOICE
@@ -152,3 +159,4 @@ async def on_ready():
 # RUN
 # =========================
 bot.run(DISCORD_TOKEN)
+
